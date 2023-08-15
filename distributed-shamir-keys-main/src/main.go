@@ -2,20 +2,42 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+
 	//sssa "github.com/jwayong/sssa-golang"
 	"log"
-	"util"
+	"utils"
 )
 
+var pwd_details utils.Pwd_details
+
 func main() {
-	/*
+	pwd_details.Total_shards = 5
+	pwd_details.Min_shard = 3
+	pwd_details.User_id, _ = strconv.Atoi(os.Args[2])
+	if os.Args[1] == "Store" {
+		pwd_details.Original_pwd = os.Args[3]
+		err := pwd_details.StorePWD()
+		if err != nil {
+			log.Fatalln("Couldnt Complete Pwd storing")
+		}
+	} else if os.Args[1] == "Get" {
+		shard := os.Args[3:]
+		str, err := pwd_details.DecryptPWD(shard)
+		fmt.Println(str, err)
+	}
+}
+
+/*
+
 		secret := "AllisWell12*"
 		user_id := 1603915
 		err := util.GenerateShard(user_id, secret)
 		if err != nil {
 			log.Fatal("Eooror ", err)
 		}
-	*/
+
 	var shards [3]string
 	shards[0] = "Kx1_pvo96VrQC_1ULKH6izzPo0r4sSA4zd47KIbUmYk=wxRyzcFIvEQDwxllrXWV-qtWtQDD_Zs2owucy4oRk0g="
 	shards[1] = "HFqHjLAg8nlrbSahxRwfLs-r-TuaNg545aWZiGvLbvE=fDjRBmj1sGXKtQ9F29ZcZzT1IUhhzMhxD0itVTIOebM="
@@ -42,5 +64,4 @@ func main() {
 
 		fmt.Println("Decrypted text: ")
 		fmt.Println(secretstring)
-	*/
-}
+*/
