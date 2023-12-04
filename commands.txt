@@ -1,3 +1,6 @@
+docker pull hashicorp/vault
+docker pull postgres
+docker pull mysql 
 docker run -d --name postgres1 -p5433:5432 -e POSTGRES_PASSWORD=postgres postgres
 
 docker run -d --name vault --cap-add=IPC_LOCK -p 8200:8200  hashicorp/vault:latest
