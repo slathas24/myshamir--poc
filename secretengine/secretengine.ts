@@ -1,0 +1,214 @@
+import { split, combine } from 'shamir-secret-sharing';
+import {SecretRecord, dto, pgconn2 } from '../dto/dto'
+//import { Storepwd } from '../dto/MYSQL';
+const totalshares = 4
+const minshares = 2
+const ds_array = ['mysql','pg2',"pg1","hcorp"]
+//const ds_array = ["pg1","pg2"] // hcorp"]
+var shardarray = Array<string>(totalshares)
+
+export async function SaveSecret(secretrec:dto.SecretRecord) {
+    // This will generate the array of spllit(s)
+    await GenerateShares(secretrec.secretvalue)
+    //logic to store each shard into datastore as of now hardcoded but need to be more generic 
+    let tmp=secretrec
+    var i=0
+    for (const ds of ds_array) {
+       console.log(ds)
+       if (ds.match("pg1")) {
+          tmp.secretvalue=shardarray[i]
+          console.log(i)
+        await import("../dto/PGDAL")
+            .then((m) =>{m.Storepwd(tmp,dto.pgconn1)
+            .then(()=>{console.log('pg1',tmp)
+              })})
+           
+        } else if (ds.match("pg2")) {
+            console.log(i)
+            tmp.secretvalue=shardarray[i]
+            await import("../dto/PGDAL")
+            .then((m) =>{m.Storepwd(tmp,dto.pgconn2)
+            .then(()=>{console.log('pg2',tmp)
+             })})
+         
+     }
+     else if (ds.match("mysql")) {
+        tmp.secretvalue=shardarray[i]
+        await import("../dto/MYSQL")
+        .then(m =>m.Storepwd(tmp,dto.mysqlcon))
+        console.log("added mysql")
+       }
+     else if (ds.match("hcorp")) {
+        tmp.secretvalue=shardarray[i]
+        await import("../dto/hashicorp/Vaultaccess")
+        .then(m =>m.Storepwd(tmp))
+        console.log("added hcorp")
+     }
+     i=i+1 
+    }
+         
+}
+   async function GenerateShares(secretValue:string) {
+    const encoder = new TextEncoder();
+    console.log(secretValue);
+    const uint8Array = encoder.encode(secretValue);
+   // console.log("Array is",uint8Array)
+    const shares = await split(uint8Array, totalshares, minshares);
+    console.log ("Total shares generated",shares.length)
+    // Logic to convert unint array shares into  string 
+    shardarray.fill('')
+    var i= 0
+    for ( var sh of shares) {
+        shardarray[i]=convertUint8ArrayToHexString(sh);
+        i++;
+    }
+    console.log(shardarray)
+     
+}
+
+export async function RetrieveSecret(secretrec:dto.SecretRecord):Promise<SecretRecord> {
+ var gotshards =  Array<string>(minshares)
+ gotshards.fill('')
+ var dsarr:number[]=Array<number>(minshares)
+ dsarr.fill(0)
+  // getting any two random resources 
+  
+  dsarr=GetRandomresources(minshares,totalshares)
+  
+ //const dsarr=[3,2]
+ console.log(dsarr,ds_array)
+  
+ // logic for retrieving the data stored in each ds 
+ var tmp=secretrec
+const ds=''
+ var n=0
+ for (const d of dsarr) {  
+     const ds=ds_array[dsarr[d]]
+     console.log(d,ds,n,ds_array[d])
+     if (ds_array[d].match("pg1")) {   
+         await import("../dto/PGDAL")
+         .then(async (m) => {
+             const p=await m.Getpwd(tmp,dto.pgconn1)
+             .then((res)=> {
+                gotshards[n]=res.secretvalue 
+                console.log('pg1',n,gotshards[n])       
+              })  
+           })
+           
+        }
+        else if (ds_array[d].match("pg2")) {
+             console.log("pg2")
+             await import("../dto/PGDAL")
+             .then(async (m) => {
+               await m.Getpwd(tmp,dto.pgconn2)
+               .then((res)=> {
+                gotshards[n]=res.secretvalue 
+                console.log('pg1',n,gotshards[n])       
+                 })
+            })   
+       }
+       else if (ds_array[d].match("mysql")) {
+           console.log("mysql")
+            await import("../dto/MYSQL")
+            .then(async(m) =>{
+              await m.Getpwd(tmp,dto.mysqlcon)
+              .then((res)=> {
+                 gotshards[n]=res.secretvalue 
+                 console.log('mysql',n,gotshards[n])       
+                 })
+            })
+     }
+     else if (ds_array[d].match("hcorp")) {
+        console.log("hcorp");
+        await import("../dto/hashicorp/Vaultaccess")
+         .then(async(m)=> {
+              await m.Getpwd(tmp)
+              .then((res)=>{ 
+                 gotshards[n]=res.secretvalue          
+                 console.log('hc',n,gotshards[n])
+                  })
+                })
+            }
+            console.log('complete',gotshards)  
+            n=n+1 
+            //ds=''
+          }
+               
+         
+        
+      //shardaarr[n]=tmp.secretvalue       
+     var uarr1=Array<Uint8Array>(minshares)
+     var n=0
+     for (const element of gotshards) {
+       uarr1[n]=convertHexStringToUint8Array(element)
+       n=n+1
+    
+  }
+   //const uarr = gotshards.map((s) => convertHexStringToUint8Array(s));  
+ // console.log('The size of the uint array is',uarr.length,uarr)
+// To combine the shares
+//const x = [convertHexStringToUint8Array(shardarray[2]),convertHexStringToUint8Array(shardarray[1])]
+//const y = Buffer.from(shares[2]).toString('hex')
+
+//console.log("Shared value",y,shares[2])
+//const x = [shares[2],shares[1]]
+const restore = await combine(uarr1)
+const decoder = new TextDecoder()
+console.log("'hereh I a,m ",decoder.decode(restore))
+secretrec.secretvalue=decoder.decode(restore)
+return new Promise((resolve,reject)=>{
+ resolve(secretrec)
+})
+///secretrec.secretvalue=decoder.decode(restore)
+//}
+
+}
+function convertUint8ArrayToHexString(uint8Array: Uint8Array): string {
+    let hexString = '';
+    for (let i = 0; i < uint8Array.length; i++) {
+        hexString += uint8Array[i].toString(16).padStart(2, '0');
+    }
+    return hexString;
+}
+
+function convertHexStringToUint8Array(hexString: string): Uint8Array {
+    const uint8Array = new Uint8Array(hexString.length / 2);
+    for (let i = 0; i < hexString.length; i += 2) {
+        uint8Array[i / 2] = parseInt(hexString.slice(i, i + 2), 16);
+    }
+    return uint8Array;
+}
+
+ function GetRandomresources(min:number ,max:number):number[] {
+   let numds=Array<number>(min)
+    let tmp=0
+    var dup=false
+    for (var n=0;n<min;n++) {
+      tmp = Math.floor(Math.random()*(((max-1) - (min)) + 1)) + min;
+      dup=false
+      for (var i=0;i<n;i++) {
+         if (numds[i]== tmp) {
+            dup = true
+            break;
+         }
+      }
+      //console.log(n,tmp,dup)
+      if (dup == true) {
+          n=n-1
+          console.log(n)
+      } 
+      else {
+        numds[n]=tmp
+      }
+    }
+    //console.log(numds)
+    return (numds);
+     
+ }
+
+ function loadmodule(m:any,o:object) {
+      m.Getpwd(o)
+      console.log('O is',o)
+ }
+ export * as seng  from './secretengine'
+   

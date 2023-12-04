@@ -1,0 +1,10 @@
+docker run -d --name postgres1 -p5433:5432 -e POSTGRES_PASSWORD=postgres postgres
+
+docker run -d --name vault --cap-add=IPC_LOCK -p 8200:8200  hashicorp/vault:latest
+
+ docker run -d --name mysql -e MYSQL_ROOT_PASSWORD="mysql" -e MYSQL_DATABASE="mysql" -e MYSQL_USER="mysql" -e  MYSQL_PASSWORD="mysql" -p3306:3306 b2013ac99101
+
+
+ docker run -d --name postgres2 -p5435:5432 -e POSTGRES_PASSWORD=postgres postgres
+
+create table secrets ( userid varchar(255), appid varchar(255), keyvalue varchar(255), secretvalue varchar(255));
