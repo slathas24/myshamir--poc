@@ -1,0 +1,15 @@
+Command for creating teh container Shamir engine 
+
+docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='mysql' -e MS1_PORT=3306 -p7090:7090 shamirimg
+
+
+PAT For github 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
+
+
+//==== command to curl teh Vault value stored 
+
+curl --header "X-Vault-Token: hvs.ksHP0fB3uSNsw84zBjSIZppZ" --request GET http://localhost:8200/v1/secret/data/777111/MYNEWAPP
+
+
+//=======for getting data by running the code for getting password 
+curl -X POST -H "Content-Type: application/json" -d '{"userid": "777111", "appid": "MYNEWAPP ", "keyvalue": "DBPWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
