@@ -1,0 +1,108 @@
+    1  clear
+    2  git
+    3  clear
+    4  git clone https://github.com/slathas24/myshamir--poc.git
+    5  cd myshamir--poc/
+    6  git checkout nodecontainer
+    7  ls
+    8  rm *.zip
+    9  nano Dockerfile
+   10  vi Dockerfile
+   11  docker build -t shamirimg .
+   12  docker images
+   13  clear
+   14  docker pull hashicorp/vault
+   15  docker pull postgres
+   16  docker pull mysql
+   17  docker ps
+   18  docker ps -a
+   19  docker network create s1
+   20  docker run -d --network=s1 --name postgres1 -p5433:5432 -e POSTGRES_PASSWORD=postgres postgres
+   21  docker run -d --network=s1 --name vault --cap-add=IPC_LOCK -p 8200:8200  hashicorp/vault:latest
+   22  docker images
+   23  docker run -d --network=s1 --name mysql -e MYSQL_ROOT_PASSWORD="mysql" -e MYSQL_DATABASE="mysql" -e MYSQL_USER="mysql" -e  MYSQL_PASSWORD="mysql" -p3306:3306 mysql
+   24  docker ps
+   25  docker run -d --network=s1 --name postgres2 -p5435:5432 -e POSTGRES_PASSWORD=postgres postgres
+   26  docker ps
+   27  clear
+   28  docker exec -it postgres1 psql -U postgres
+   29  docker exec -it postgres2 psql -U postgres
+   30  docker exec -it mysql mysql -u mysql -p mysql 
+   31  docker logs vault
+   32  docker inspect s1
+   33  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5433 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5435 -e MS1_HOST='172.16.0.4' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   34  docker ps
+   35  docker exec -it c1 sh
+   36  docker rm -f c1
+   37  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5433 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5435 -e MS1_HOST='172.18.0.4' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   38  docker exec -it c1 sh
+   39  docker exec -it postgres1 psql -U postgres 
+   40  docker exec -it postgres2 psql -U postgres 
+   41  docker exec -it mysql mysql -u mysql -p mysql 
+   42  ls
+   43  cd dto
+   44  docker logs c1
+   45  vi dto.js
+   46  vi dto.ts
+   47  docker build -t shamirimg .
+   48  cd
+   49  cd myshamir--poc/
+   50  ls
+   51  cat dto/dto.ts
+   52  docker build -t shamirimg .
+   53  docker rm -f c1
+   54  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5433 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5435 -e MS1_HOST='172.16.0.4' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   55  docker logs c1
+   56  docker rm -f c1
+   57  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='172.16.0.4' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   58  docker logs c1
+   59  docker exec -it c1 sh
+   60  docker exec -it mysql mysql -u mysql -p mysql
+   61  docker exec -it postgres2 psql -U postgres 
+   62  docker exec -it postgres1 psql -U postgres 
+   63  docker em -f c1
+   64  docker rm -f c1
+   65  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='mysql' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   66  docker logs c1
+   67  docker exec -it c1 sh
+   68  docker exec -it postgres1 psql -U postgres 
+   69  docker exec -it postgres2 psql -U postgres 
+   70  docker exec -it mysql mysql -u mysql -p mysql
+   71  curl --header "X-Vault-Token: hvs.ksHP0fB3uSNsw84zBjSIZppZ" --request GET http://localhost:8200/v1/secret/data/1603914/TRIALAPP
+   72  curl -X POST -H "Content-Type: application/json" -d '{"userid": "ABC1234", "appid": "TRIALAPP", "keyvalue": "APPPASSWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+   73  curl -i -X POST -H "Content-Type: application/json" -d '{"userid": "ABC1234", "appid": "TRIALAPP", "keyvalue": "APPPASSWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+   74  docker ps
+   75  docker logs c1
+   76  docker restart c1
+   77  docker ps
+   78  docker exec -it c1 sh
+   79  curl -i -X POST -H "Content-Type: application/json" -d '{"1603914": "ABC1234", "appid": "TRIALAPP", "keyvalue": "APPPASSWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+   80  docker logs c1
+   81  docker rm c1
+   82  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='mysql' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   83  docker logs c1
+   84  clear
+   85  curl -X POST -H "Content-Type: application/json" -d '{"userid": "ABC1234", "appid": "TRIALAPP", "keyvalue": "APPPASSWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+   86  docker logs c1
+   87  docker rm c1
+   88  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='mysql' -e MS1_PORT=3306 -p7090:7090 shamirimg
+   89  docker exec -it c1 sh
+   90  docker exec -it c1 curl
+   91  docker ps
+   92  docker logs c1
+   93  curl --header "X-Vault-Token: hvs.ksHP0fB3uSNsw84zBjSIZppZ" --request GET http://localhost:8200/v1/secret/data/1603914/TRIALAPP
+   94  clear
+   95  curl --header "X-Vault-Token: hvs.ksHP0fB3uSNsw84zBjSIZppZ" --request GET http://localhost:8200/v1/secret/data/1603914/TRIALAPP
+   96  clear
+   97  docker exec -it postgres1 psql -U postgres
+   98  docker exec -it postgres2 psql -U postgres
+   99  curl -X POST -H "Content-Type: application/json" -d '{"userid": "1603914", "appid": "TRIALAPP", "keyvalue": "APPPASSWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+  100  docker exec -it c1 sh
+  101  curl --header "X-Vault-Token: hvs.ksHP0fB3uSNsw84zBjSIZppZ" --request GET http://localhost:8200/v1/secret/data/777111/MYNEWAPP
+  102  docker exec -it postgres1 psql -U postgres 
+  103  curl -X POST -H "Content-Type: application/json" -d '{"userid": "777111", "appid": "MYNEWAPP ", "keyvalue": "DBPWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+  104  docker rm -f c1
+  105  docker run -d --name c1 --network=s1 -e VAULT_URL='http://172.18.0.3:8200' -e VAULT_TOKEN='hvs.ksHP0fB3uSNsw84zBjSIZppZ' -e PG1_HOST='172.18.0.2' -e PG1_PORT=5432 -e PG2_HOST='172.18.0.5' -e PG2_PORT=5432 -e MS1_HOST='mysql' -e MS1_PORT=3306 -p7090:7090 shamirimg
+  106  curl -X POST -H "Content-Type: application/json" -d '{"userid": "777111", "appid": "MYNEWAPP", "keyvalue": "DBPWD" ,"secretvalue": ""}' http://localhost:7090/process/secrets
+  107  history
+  108  history > outfile

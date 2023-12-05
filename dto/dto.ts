@@ -18,7 +18,6 @@ export const mysqlcon: Connection = {
   password: 'mysql',
   database: 'mysql',
   port: p3 || 3306
-
 }
 export class SecretRecord {
        public userid: string
@@ -33,4 +32,8 @@ export class SecretRecord {
       }
 
 }
+console.log(pgconn1)
+console.log (pgconn2)
+console.log(mysqlcon)
+
 export * as dto from './dto'
