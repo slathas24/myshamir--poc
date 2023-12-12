@@ -3,7 +3,7 @@ import { SecretRecord } from './dto/dto';
 //import { Storepwd,Getpwd } from './dto/MYSQL'
 import { seng } from './secretengine/secretengine'
 //import { Storepwd,Getpwd } from './dto/hashicorp/Vaultaccess';
-
+import * as fs from 'fs';
 // program begining 
 async function main() {
 //let x= new SecretRecord("P009",'APP1','PASSWD','Dont_Please_123$')
@@ -15,10 +15,11 @@ async function main() {
       //.catch((error) => {
      //   console.error('Error:', error);
       //});
-     
-      
+      const fp="data.json"
+     const jsonString = fs.readFileSync(fp, 'utf8');
+      let y = JSON.parse(jsonString)
     
-      let y= new SecretRecord("1603914",'TRIALAPP','APPPASSWD','Hey+Comeon_u_cando12$')
+      //let y= new SecretRecord("1603914",'TRIALAPP','APPPASSWD','Hey+Comeon_u_cando12$')
        await seng.SaveSecret(y)
       .then((res) => {
         console.log(res)
